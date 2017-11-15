@@ -1,9 +1,6 @@
 #Server Side
-#Funciones fuera de Shiny App
-#A change
-#Another Change
-#one more
-library(RCurl)
+#Functions outside Shiny
+{library(RCurl)
 library(plyr)
 library(urltools)
 library(XML)
@@ -13,6 +10,9 @@ library(sp)
 library(stringr)
 library(shiny)
 library(tableHTML)
+library(shinyjs)
+library(shinydashboard)}
+
 #Decode Function
 decodeLine <- function(encoded){
   require(bitops)
@@ -116,7 +116,7 @@ server=function(input, output){
 
 
 output$temp=renderUI(HTML("<ul>
-<li>Enter a date, it must be a future date, otherwise it wont work!.</li>
+<li>Enter a date and time, it must be a future date, otherwise it wont work!.</li>
 <li>Enter a Start/Origin Point in the form of 'Latitute,Longitude'.</li>
 <li>Choose how many points you want to calculate. 
 This value are used to create a grid of points surrounding the Start/Origin point.</li>
@@ -124,23 +124,37 @@ This value are used to create a grid of points surrounding the Start/Origin poin
 So don't waste it!</li>
 </ul>"))
 
+#Calculatin matrix of points
+centralPointv1=reactive({paste(c(input$OriginLat,input$OriginLon), collapse=",")})
+latDistv1=reactive({input$PointMatrixLat/2})
+lonDistv1=reactive({input$PointMatrixLon/2})
+
+OriginNorthWestv1=reactive({c(latDistv1() + as.numeric(strsplit(centralPointv1(),",")[[1]][1]), as.numeric(strsplit(centralPointv1(),",")[[1]][2]) - lonDistv1())})
+OriginSouthEastv1=reactive({c((as.numeric(strsplit(centralPointv1(),",")[[1]][1])) - latDistv1(), lonDistv1() + as.numeric(strsplit(centralPointv1(),",")[[1]][2]))})
+CoordMatrix=reactive({c(OriginNorthWestv1(),OriginSouthEastv1())})
+
+output$debug=renderText({OriginNorthWestv1()})
+
+gridTemp=eventReactive(input$Grid, {
+  p1=leaflet() %>% addTiles() %>% addProviderTiles(providers$OpenStreetMap)
+
+  p1=addRectangles(p1, lat1=CoordMatrix()[1], lng1=CoordMatrix()[2],
+                   lat2=CoordMatrix()[3], lng2=CoordMatrix()[4],
+                   fillColor="transparent")
+  p1
+})
+output$Progress2=renderText({" "})
+output$gridmap=renderLeaflet({gridTemp()})
+
 TravelTimeFUN=eventReactive(input$time,{
 
-#Central Point
-centralPoint=input$Origin
-
-#Full Grid from central point
-DestinationNorthWest=c(-33.22490308626395,-71.04721069335938)
-
-#Origin in South-East
-OriginSouthEast=c(-33.74032885072381,-70.24246215820312)
-
+  
 #Sequence from central Y to Southest Point, in 5 steps.
 Steps=round(sqrt(input$Puntos), digits=0) #Usar 20 es ideal
-centralSouthY=seq(OriginSouthEast[1],DestinationNorthWest[1], by=(OriginSouthEast[1]-DestinationNorthWest[1])*-1/Steps)[1:Steps]
+centralSouthY=seq(OriginSouthEastv1()[1],OriginNorthWestv1()[1], by=(OriginSouthEastv1()[1]-OriginNorthWestv1()[1])*-1/Steps)[1:Steps]
 
 #Sequence from central X to Westest Point, in 5 steps.
-centralWestX=seq(OriginSouthEast[2],DestinationNorthWest[2], by=(OriginSouthEast[2]-DestinationNorthWest[2])*-1/Steps)[2:(Steps+1)]
+centralWestX=seq(OriginSouthEastv1()[2],OriginNorthWestv1()[2], by=(OriginSouthEastv1()[2]-OriginNorthWestv1()[2])*-1/Steps)[2:(Steps+1)]
 
 #Q3 for Quadrant 3 in cartesian system.
 coordinatesQ3=apply(expand.grid(centralSouthY, centralWestX), 1, paste, collapse=",")
@@ -155,7 +169,7 @@ timeVar=as.numeric(as.POSIXct(input$Date))
 withProgress(message="Calculating Time", value=0, {
  for (i in 1:nrow(coordinatesQ3)){
    incProgress(1/nrow(coordinatesQ3), detail=paste("Sample Nº", i))
-   results[[i]]=as.data.frame(APIFunction(start=centralPoint, end=coordinatesQ3[i,], time=timeVar, key=input$Key))
+   results[[i]]=as.data.frame(APIFunction(start=c(input$OriginLat,input$OriginLon), end=coordinatesQ3[i,], time=timeVar, key=input$Key))
   }
 })
 
@@ -180,8 +194,7 @@ quantileInfo=sapply(split(quantileInfo$V1, quantileInfo$V2), mean)
 pal2=colorQuantile(c("green","red"), quantileInfo)
 groupName=paste("Quantile nº", sort(unique(colorRang)), sep="")
 
-
-
+#Extracting values out of reactive event function.
 list(groupName=groupName, 
      results=results, 
      coordinatesQ3=coordinatesQ3, 
@@ -189,7 +202,6 @@ list(groupName=groupName,
      quantileInfo=quantileInfo,
      colorRang=colorRang,
      debugList=" ")
-      
       })
     
     
@@ -224,8 +236,8 @@ plotTemp=eventReactive(input$plot, {
   }
   
   #Add info marker         
-  p1=addMarkers(p1, group="Info", lat=as.numeric(strsplit(input$Origin,",")[[1]][1]),
-                lng=as.numeric(strsplit(input$Origin,",")[[1]][2]),
+  p1=addMarkers(p1, group="Info", lat=input$OriginLat,
+                lng=input$OriginLon,
                 popup = paste("Nº of Points calculated: ", nrow(coordinatesQ3()),"; ",
                               "Nº of Points after filter: ", length(results()),"; ",
                               "Date and time used: ", paste(input$Date, sep=""),"; ",
@@ -237,8 +249,9 @@ plotTemp=eventReactive(input$plot, {
   
   for(i in sort(unique(colorRang()))){
     p1=addAwesomeMarkers(p1, group=groupName()[i],
-                         lat=as.numeric(strsplit(input$Origin,",")[[1]][1]), 
-                         lng=as.numeric(strsplit(input$Origin,",")[[1]][2]), icon = awesomeIcons(
+                         lat=input$OriginLat, 
+                         lng=input$OriginLon,
+                         icon = awesomeIcons(
                            library = 'glyphicon',
                            icon = "download",
                            markerColor = "black"))}
@@ -246,7 +259,7 @@ p1
 
 })
 
-output$mymap=renderLeaflet({plotTemp()})
+output$gridmap=renderLeaflet({plotTemp()})
 
 }
 
