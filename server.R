@@ -135,8 +135,15 @@ CoordMatrix=reactive({c(OriginNorthWestv1(),OriginSouthEastv1())})
 
 output$debug=renderText({OriginNorthWestv1()})
 
-gridTemp=eventReactive(input$Grid, {
+output$gridmap=renderLeaflet({
   p1=leaflet() %>% addTiles() %>% addProviderTiles(providers$OpenStreetMap)
+  })
+
+gridTemp=observeEvent(input$Grid, {
+  p1=leafletProxy("gridmap") %>% addTiles() %>% addProviderTiles(providers$OpenStreetMap) %>%
+    setView(lat=as.numeric(strsplit(centralPointv1(),",")[[1]][1]),
+            lng=as.numeric(strsplit(centralPointv1(),",")[[1]][2]),
+            zoom=9)
 
   p1=addRectangles(p1, lat1=CoordMatrix()[1], lng1=CoordMatrix()[2],
                    lat2=CoordMatrix()[3], lng2=CoordMatrix()[4],
@@ -144,9 +151,9 @@ gridTemp=eventReactive(input$Grid, {
   p1
 })
 output$Progress2=renderText({" "})
-output$gridmap=renderLeaflet({gridTemp()})
 
-TravelTimeFUN=eventReactive(input$time,{
+
+TravelTimeFUN=observeEvent(input$time,{
 
   
 #Sequence from central Y to Southest Point, in 5 steps.
@@ -194,73 +201,49 @@ quantileInfo=sapply(split(quantileInfo$V1, quantileInfo$V2), mean)
 pal2=colorQuantile(c("green","red"), quantileInfo)
 groupName=paste("Quantile nº", sort(unique(colorRang)), sep="")
 
-#Extracting values out of reactive event function.
-list(groupName=groupName, 
-     results=results, 
-     coordinatesQ3=coordinatesQ3, 
-     pal2=pal2, 
-     quantileInfo=quantileInfo,
-     colorRang=colorRang,
-     debugList=" ")
-      })
-    
-    
+#Plot
 
-groupName=reactive({TravelTimeFUN()$groupName})
-results=reactive({TravelTimeFUN()$results})
-coordinatesQ3=reactive({TravelTimeFUN()$coordinatesQ3})
-pal2=reactive({TravelTimeFUN()$pal2})
-quantileInfo=reactive({TravelTimeFUN()$quantileInfo})
-colorRang=reactive({TravelTimeFUN()$colorRang})
-debugList=reactive({TravelTimeFUN()$debugList})
-
-output$Progress2=renderText({debugList()})
-
-
-plotTemp=eventReactive(input$plot, {
-  p1=leaflet() %>% addTiles() %>% addLayersControl(baseGroups = c(groupName(),"Info")) %>% 
-    addProviderTiles(providers$OpenStreetMap)
-  for(i in 1:length(results())){
-    #Add route liens
-    p1=addPolylines(p1, lat=results()[[i]]$lat,
-                    lng=results()[[i]]$lon, color = paste(results()[[i]]$colorPallete[1]),
-                    group=groupName()[(results()[[i]]$colorRang)[1]]) 
-    #Add markers         
-    p1=addMarkers(p1,label=paste(round(results()[[i]]$time[1], digits=2),"min"),
-                  lat=results()[[i]]$lat[nrow(results()[[i]])],
-                  lng=results()[[i]]$lon[nrow(results()[[i]])],
-                  group=groupName()[(results()[[i]]$colorRang)[1]],
-                  popup=paste("Route nº", results()[[i]]$route[1]))
-    
-    #cat("\r", paste("Plot Nº", i))
-  }
+p1=leafletProxy("gridmap") %>% clearShapes() %>% clearMarkers() %>% addTiles() %>% addLayersControl(baseGroups = c(groupName,"Info")) %>% 
+  addProviderTiles(providers$OpenStreetMap)
+for(i in 1:length(results)){
+  #Add route liens
+  p1=addPolylines(p1, lat=results[[i]]$lat,
+                  lng=results[[i]]$lon, color = paste(results[[i]]$colorPallete[1]),
+                  group=groupName[(results[[i]]$colorRang)[1]]) 
+  #Add markers         
+  p1=addMarkers(p1,label=paste(round(results[[i]]$time[1], digits=2),"min"),
+                lat=results[[i]]$lat[nrow(results[[i]])],
+                lng=results[[i]]$lon[nrow(results[[i]])],
+                group=groupName[(results[[i]]$colorRang)[1]],
+                popup=paste("Route nº", results[[i]]$route[1]))
   
-  #Add info marker         
-  p1=addMarkers(p1, group="Info", lat=input$OriginLat,
-                lng=input$OriginLon,
-                popup = paste("Nº of Points calculated: ", nrow(coordinatesQ3()),"; ",
-                              "Nº of Points after filter: ", length(results()),"; ",
-                              "Date and time used: ", paste(input$Date, sep=""),"; ",
-                              "Central point is HERE.", sep=""))
-  
-  p1= p1 %>% addLegend("bottomright", colors=pal2()(quantileInfo()),
-                       labels=round(quantileInfo(), digits = 2),
-                       title="Minuntos de viaje promedio")
-  
-  for(i in sort(unique(colorRang()))){
-    p1=addAwesomeMarkers(p1, group=groupName()[i],
-                         lat=input$OriginLat, 
-                         lng=input$OriginLon,
-                         icon = awesomeIcons(
-                           library = 'glyphicon',
-                           icon = "download",
-                           markerColor = "black"))}
+  #cat("\r", paste("Plot Nº", i))
+}
+
+#Add info marker         
+p1=addMarkers(p1, group="Info", lat=input$OriginLat,
+              lng=input$OriginLon,
+              popup = paste("Nº of Points calculated: ", nrow(coordinatesQ3),"; ",
+                            "Nº of Points after filter: ", length(results),"; ",
+                            "Date and time used: ", paste(input$Date, sep=""),"; ",
+                            "Central point is HERE.", sep=""))
+
+p1= p1 %>% addLegend("bottomright", colors=pal2(quantileInfo),
+                     labels=round(quantileInfo, digits = 2),
+                     title="Minuntos de viaje promedio")
+
+for(i in sort(unique(colorRang))){
+  p1=addAwesomeMarkers(p1, group=groupName[i],
+                       lat=input$OriginLat, 
+                       lng=input$OriginLon,
+                       icon = awesomeIcons(
+                         library = 'glyphicon',
+                         icon = "download",
+                         markerColor = "black"))}
 p1
 
-})
-
-output$gridmap=renderLeaflet({plotTemp()})
-
+      })
+    
 }
 
 

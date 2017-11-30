@@ -1,5 +1,5 @@
 #Funciones fuera de Shiny App
-library(RCurl)
+{library(RCurl)
 library(plyr)
 library(urltools)
 library(XML)
@@ -10,7 +10,7 @@ library(stringr)
 library(shiny)
 library(tableHTML)
 library(shinyjs)
-library(shinydashboard)
+library(shinydashboard)}
 #Client Side
 #asd
 ui= fluidPage(
@@ -50,13 +50,11 @@ ui= fluidPage(
   uiOutput(outputId="temp"),
   
   div(actionButton("time", "Run"), style="float:left"),
-  conditionalPanel(condition= "output.Progress2", 
-                   div(actionButton("plot", "Plot"), style="float:left")),
   actionButton("Grid","Plot Gird"),
-  leafletOutput("gridmap")
-  
-  )),
+  leafletOutput("gridmap"),
   leafletOutput("mymap")
+  ))
+  
   )
 
 #Ui elije Fecha, Origen, Nº de Puntos y Clave.
