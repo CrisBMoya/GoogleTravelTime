@@ -136,11 +136,11 @@ CoordMatrix=reactive({c(OriginNorthWestv1(),OriginSouthEastv1())})
 output$debug=renderText({OriginNorthWestv1()})
 
 output$gridmap=renderLeaflet({
-  p1=leaflet() %>% addTiles() %>% addProviderTiles(providers$OpenStreetMap)
+  p1=leaflet() %>%  addTiles() %>% addProviderTiles(providers$OpenStreetMap)
   })
 
 gridTemp=observeEvent(input$Grid, {
-  p1=leafletProxy("gridmap") %>% addTiles() %>% addProviderTiles(providers$OpenStreetMap) %>%
+  p1=leafletProxy("gridmap") %>% clearShapes() %>% clearMarkers() %>%  addTiles() %>% addProviderTiles(providers$OpenStreetMap) %>%
     setView(lat=as.numeric(strsplit(centralPointv1(),",")[[1]][1]),
             lng=as.numeric(strsplit(centralPointv1(),",")[[1]][2]),
             zoom=9)
@@ -150,7 +150,6 @@ gridTemp=observeEvent(input$Grid, {
                    fillColor="transparent")
   p1
 })
-output$Progress2=renderText({" "})
 
 
 TravelTimeFUN=observeEvent(input$time,{
@@ -173,7 +172,7 @@ coordinatesQ3=data.frame(lat=as.numeric(as.character(coordinatesQ3$X1)), lng=as.
 results <- list()
 timeVar=as.numeric(as.POSIXct(input$Date))
 
-withProgress(message="Calculating Time", value=0, {
+withProgress(message="Calculating Time per each route", value=0, {
  for (i in 1:nrow(coordinatesQ3)){
    incProgress(1/nrow(coordinatesQ3), detail=paste("Sample Nº", i))
    results[[i]]=as.data.frame(APIFunction(start=c(input$OriginLat,input$OriginLon), end=coordinatesQ3[i,], time=timeVar, key=input$Key))
@@ -203,7 +202,9 @@ groupName=paste("Quantile nº", sort(unique(colorRang)), sep="")
 
 #Plot
 
-p1=leafletProxy("gridmap") %>% clearShapes() %>% clearMarkers() %>% addTiles() %>% addLayersControl(baseGroups = c(groupName,"Info")) %>% 
+p1=leafletProxy("gridmap") %>% clearShapes() %>% clearMarkers() %>% clearGroup(c(groupName,"Info")) %>% 
+  clearMarkers() %>% clearPopups() %>% clearControls() %>%
+  addTiles() %>% addLayersControl(baseGroups = c(groupName,"Info")) %>% 
   addProviderTiles(providers$OpenStreetMap)
 for(i in 1:length(results)){
   #Add route liens
@@ -217,7 +218,7 @@ for(i in 1:length(results)){
                 group=groupName[(results[[i]]$colorRang)[1]],
                 popup=paste("Route nº", results[[i]]$route[1]))
   
-  #cat("\r", paste("Plot Nº", i))
+
 }
 
 #Add info marker         
@@ -230,7 +231,7 @@ p1=addMarkers(p1, group="Info", lat=input$OriginLat,
 
 p1= p1 %>% addLegend("bottomright", colors=pal2(quantileInfo),
                      labels=round(quantileInfo, digits = 2),
-                     title="Minuntos de viaje promedio")
+                     title="Average Travel Time")
 
 for(i in sort(unique(colorRang))){
   p1=addAwesomeMarkers(p1, group=groupName[i],

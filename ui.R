@@ -12,21 +12,22 @@ library(tableHTML)
 library(shinyjs)
 library(shinydashboard)}
 #Client Side
-#asd
+
 ui= fluidPage(
   
   sidebarLayout(
     sidebarPanel(
   
-  textOutput(outputId="debug"),
-  textInput(inputId="Date", label="Date", value="2018-01-01 18:00"),
+  textInput(inputId="Date", label="Date", value=Sys.time()+86400),
   
   fluidRow(
     box(width = 10, title="Origin point:",
         splitLayout(
-          numericInput(inputId="OriginLat", label="Latitude", value=-33.4516906),
-          numericInput(inputId="OriginLon", label="Longitude", value=-70.66742690000001)
-        )
+          numericInput(inputId="OriginLat", label="Latitude", value=-33.4516906, min=-90, max=90),
+          numericInput(inputId="OriginLon", label="Longitude", value=-70.66742690000001, min=-180, max=180)
+        ),
+        helpText(a("Find Latitude and Longitude values for specific locations here!", target="_blank", href="https://www.gps-coordinates.net/"))
+        
     )
   ),
   
@@ -46,11 +47,10 @@ ui= fluidPage(
     ),
   mainPanel(
   titlePanel("Instructions:"),
-  textOutput(outputId="Progress2"),
   uiOutput(outputId="temp"),
   
   div(actionButton("time", "Run"), style="float:left"),
-  actionButton("Grid","Plot Gird"),
+  actionButton("Grid","Plot Grid"),
   leafletOutput("gridmap"),
   leafletOutput("mymap")
   ))
