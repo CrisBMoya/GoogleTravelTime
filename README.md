@@ -9,11 +9,11 @@ You provide a start or origin point, then select the number of points you want t
 Currently, this App is hosted at: https://cbmapp.shinyapps.io/ShinyTravelTime/.
 
 A few changes has been made:
--Now you can choose the start point everywhere on the world by giving the correct pair of Latitude and Longitude values.
--The matrix size can be plotted as a rectangle into the map and you can change it's size. The specific points inside the matrix arend displayed due to the heavy loading that implies plotting a big number of markers into the map.
+- Now you can choose the start point everywhere on the world by giving the correct pair of Latitude and Longitude values.
+- The matrix size can be plotted as a rectangle into the map and you can change it's size. The specific points inside the matrix arend displayed due to the heavy loading that implies plotting a big number of markers into the map.
 
 Future changes:
--Plot the matrix of points, possibly using dots, not markers.
--Add a feautre to download the map results whether in PDF or HTML format.
--Improve the way the user choose the origint point, and possibly the zooming.
+- Plot the matrix of points, possibly using dots, not markers.
+- Add a feautre to download the map results whether in PDF or HTML format.
+- Improve the way the user choose the origint point, and possibly the zooming.
 
