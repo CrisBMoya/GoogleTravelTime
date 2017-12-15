@@ -156,7 +156,6 @@ centralWestXv2=reactive({seq(OriginSouthEastv1()[2],OriginNorthWestv1()[2],
 
 #Q3 for Quadrant 3 in cartesian system.
 GridCoords=reactive({
-
 coordinatesQ3v2=apply(expand.grid(centralSouthYv2(), centralWestXv2()), 1, paste, collapse=",")
 coordinatesQ3v2=as.data.frame(coordinatesQ3v2)
 coordinatesQ3v2=data.frame(str_split_fixed(coordinatesQ3v2$coordinatesQ3v2, ",", 2))
@@ -187,7 +186,6 @@ timeVar=reactive({as.numeric(as.POSIXct(input$Date))})
 
 resultsV1=reactive({
   resultsList <- list()
-  #Iterating Time of travel function over number of coordinates generated
   withProgress(message="Calculating Time...", value=0, {
     for (i in 1:nrow(GridCoords())){
       incProgress(1/nrow(GridCoords()), detail=paste("Sample Nº", i))
@@ -195,20 +193,8 @@ resultsV1=reactive({
     }
   })
   names(resultsList)=paste("Route",1:length(resultsList), sep="")
-  
   resultsList=resultsList[sapply(resultsList, function(x) x[1,1]<=90 & x[1,1] >= 20)]
   resultsList
-  # colorRang=sapply(resultsList, function(x) x[1,1])
-  # colorRang=cut(colorRang, breaks=quantile(colorRang,seq(0,1, length.out=7)), include.lowest=T, labels=F)
-  # resultsList=mapply(cbind, resultsList, "colorRang"=colorRang, SIMPLIFY=FALSE)
-  # 
-  # #Formatting palletes, colors and groups for further plotting.
-  # pal=colorQuantile(c("green","red"), 1:max(unique(colorRang)))
-  # colorPallete=pal(sapply(resultsList, function(x) x$colorRang[1]))
-  # resultsList=mapply(cbind, resultsList, "colorPallete"=colorPallete, SIMPLIFY=FALSE)
-  # 
-  # 
-  # resultsList
   })
 
 colorRang=reactive({
@@ -219,7 +205,6 @@ colorRang=reactive({
 
 results=reactive({
   resultsV2=mapply(cbind, resultsV1(), "colorRang"=colorRang(), SIMPLIFY=FALSE)
-  #Formatting palletes, colors and groups for further plotting.
   pal=colorQuantile(c("green","red"), 1:max(unique(colorRang())))
   colorPallete=pal(sapply(resultsV2, function(x) x$colorRang[1]))
   resultsV2=mapply(cbind, resultsV2, "colorPallete"=colorPallete, SIMPLIFY=FALSE)
@@ -239,19 +224,14 @@ pal2=colorQuantile(c("green","red"), quantileInfo())
 groupName=reactive({
   groupName=paste("Quantile nº", sort(unique(colorRang())), sep="")
 })
-##Note. Reactive is getting colorRang in between, observe needs this value. colorRan
-#should be reactive too. Two different instances of resulst as reactive will be needed, cause
-#results its also using colorRang to change or aggregate values to itself.
-observeEvent(input$time,{
 
-    #Plot
-  
+observeEvent(input$time,{
   p1=leafletProxy("gridmap") %>% clearShapes() %>% clearMarkers() %>% clearGroup(c(groupName(),"Info")) %>% 
     clearMarkers() %>% clearPopups() %>% clearControls() %>%
     addTiles() %>% addLayersControl(baseGroups = c(groupName(),"Info")) %>% 
     addProviderTiles(providers$OpenStreetMap)
   for(i in 1:length(results())){
-    #Add route liens
+    #Add route lines
     p1=addPolylines(p1, lat=results()[[i]]$lat,
                     lng=results()[[i]]$lon, color = paste(results()[[i]]$colorPallete[1]),
                     group=groupName()[(results()[[i]]$colorRang)[1]]) 
@@ -288,52 +268,6 @@ observeEvent(input$time,{
   p1
   
 })
-
-mapdown=reactive({
-  
-  
-  p1=leafletProxy("gridmap") %>% clearShapes() %>% clearMarkers() %>% clearGroup(c(groupName(),"Info")) %>% 
-    clearMarkers() %>% clearPopups() %>% clearControls() %>%
-    addTiles() %>% addLayersControl(baseGroups = c(groupName(),"Info")) %>% 
-    addProviderTiles(providers$OpenStreetMap)
-  for(i in 1:length(results())){
-    #Add route liens
-    p1=addPolylines(p1, lat=results()[[i]]$lat,
-                    lng=results()[[i]]$lon, color = paste(results()[[i]]$colorPallete[1]),
-                    group=groupName()[(results()[[i]]$colorRang)[1]]) 
-    #Add markers         
-    p1=addMarkers(p1,label=paste(round(results()[[i]]$time[1], digits=2),"min"),
-                  lat=results()[[i]]$lat[nrow(results()[[i]])],
-                  lng=results()[[i]]$lon[nrow(results()[[i]])],
-                  group=groupName()[(results()[[i]]$colorRang)[1]],
-                  popup=paste("Route nº", results()[[i]]$route[1]))
-    
-    
-  }
-  
-  #Add info marker         
-  p1=addMarkers(p1, group="Info", lat=input$OriginLat,
-                lng=input$OriginLon,
-                popup = paste("Nº of Points calculated: ", nrow(GridCoords()),"; ",
-                              "Nº of Points after filter: ", length(results()),"; ",
-                              "Date and time used: ", paste(input$Date, sep=""),"; ",
-                              "Central point is HERE.", sep=""))
-  
-  p1= p1 %>% addLegend("bottomright", colors=pal2()(quantileInfo()),
-                       labels=round(quantileInfo(), digits = 2),
-                       title="Average Travel Time")
-  
-  for(i in sort(unique(colorRang()))){
-    p1=addAwesomeMarkers(p1, group=groupName()[i],
-                         lat=input$OriginLat, 
-                         lng=input$OriginLon,
-                         icon = awesomeIcons(
-                           library = 'glyphicon',
-                           icon = "download",
-                           markerColor = "black"))}
-  p1
-  
-  })
 }
 
 

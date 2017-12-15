@@ -58,5 +58,3 @@ ui= fluidPage(
   ))
   )
 
-#Ui elije Fecha, Origen, Nº de Puntos y Clave.
-
