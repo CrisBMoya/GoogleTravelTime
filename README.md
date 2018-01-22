@@ -19,4 +19,4 @@ Future changes:
 
 ##############################################
 
-**DISCLAIMER**: If you came from r/MapPorn you'll find this app dosen't work exactly like the examples exposed on the website. This repository correspond to and old-yet-to-update version of it. As I work on my free time it can take a while.
+**DISCLAIMER**: If you came from r/MapPorn you'll find this scripts doesn't work exactly like the examples exposed on the website. This repository correspond to and old-yet-to-update version of it. As I work on my free time it can take a while. The core functionality, though, are the same.
