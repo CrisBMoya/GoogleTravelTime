@@ -12,6 +12,7 @@ A few changes has been made:
 - Now you can choose the start point everywhere on the world by giving the correct pair of Latitude and Longitude values.
 - The matrix size can be plotted as a rectangle into the map and you can change it's size. The specific points inside the matrix.
 - The points are plotted along with the matrix size.
+- Improve the colors of routes.
 
 Future changes:
 - Add a feautre to download the map results whether in PDF or HTML format. This has been proven difficult. Working on it.
