@@ -13,9 +13,9 @@ A few changes have been made:
 - The matrix size can be plotted as a rectangle into the map and you can change it's size. The specific points inside the matrix.
 - The points are plotted along with the matrix size.
 - Improve the colors of routes.
+- Added a Download button. It works dependent to reactives so pressing it runs the whole code. Beware with your API keys.
 
 Future changes:
-- Add a feature to download the map results whether in PDF or HTML format. This has been proven difficult. Working on it.
 - Improve the way the user chooses the origin point, and possibly the zooming.
 
 **DISCLAIMER**: If you came from r/MapPorn or https://cbmapp.shinyapps.io/RouteTimes/ you'll find these scripts doesn't work exactly like the examples exposed on the website. The script that do those maps are of my personal use only (since I use some tricks with google API's keys), but similar results can be achieved using the scripts in this repository. You can also translate the shiny app to normal code to improve waiting times and add functionality.
