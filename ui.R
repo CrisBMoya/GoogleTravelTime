@@ -7,6 +7,8 @@
   library(shiny)
   library(shinyjs)
   library(shinydashboard)
+  library(mapview)
+  library(tidyverse)
 }
 #Client Side
 
@@ -56,7 +58,8 @@ ui= fluidPage(
   
   div(actionButton("time", "Run"), style="float:left"),
   actionButton("Grid","Plot Grid"),
-  leafletOutput("gridmap")
+  leafletOutput("gridmap"),
+  downloadButton("download")
   ))
   )
 

@@ -10,6 +10,8 @@ library(stringr)
 library(shiny)
 library(shinyjs)
 library(shinydashboard)
+library(mapview)
+  library(tidyverse)
   }
 
 #Functions
@@ -132,6 +134,7 @@ output$temp=renderUI(HTML("<ul>
 This value are used to create a grid of points surrounding the Start/Origin point.</li>
 <li>Enter your API Key from Google Maps API. Remember! this Key has daily limits to use it for free! 
 So don't waste it!</li>
+<li>Press the Download button ONLY AFTER you've calculated the Routes. Otherwise you may waste your key.</li>
 </ul>"))
 
 #Calculatin matrix of points
@@ -314,6 +317,57 @@ p1= p1 %>% addLegend("bottomright", colors=colorFun(c(1:Breaks*2)),
                      title="Travel Time Quantile")
 p1
 })
- }
+
+###
+#DOWNLOAD
+###
+output$download <- downloadHandler(
+  filename = "TravelTimeMap.html",
+  content = function(file){
+    
+    p2=leaflet() %>% clearShapes() %>% clearMarkers() %>%
+      clearMarkers() %>% clearPopups() %>% clearControls() %>%
+      addTiles() %>% addLayersControl(overlayGroups="Route Polylines",
+                                      options= layersControlOptions(collapsed=FALSE)) %>%
+      addProviderTiles(providers$OpenStreetMap) %>%
+      hideGroup("Route Polylines")
+    
+    for(routes in 1:routeNumberReac()){
+      #Add route lines
+      p2=p2 %>% addPolylines(
+                      lat=DayListv4Reac()[[routes]]$lat,
+                      lng=DayListv4Reac()[[routes]]$lon,
+                      group="Route Polylines",
+                      color=DayListv4Reac()[[routes]]$Color,
+                      popup = paste(round(DayListv4Reac()[[routes]]$time, digits=2), "minutes;",
+                                    round(DayListv4Reac()[[routes]]$distance, digits=2),"km"),
+                      highlight=highlightOptions(weight=5,
+                                                 color="#ffff00",
+                                                 dashArray="",
+                                                 fillOpacity=0.7,
+                                                 bringToFront=TRUE)
+      )
+      
+      #Points
+      p2=p2 %>% addCircles(
+                    lat=DayListv4Reac()[[routes]]$lat[length(DayListv4Reac()[[routes]]$lat)],
+                    lng=DayListv4Reac()[[routes]]$lon[length(DayListv4Reac()[[routes]]$lon)],
+                    color="black", fillColor="black",
+                    group="Route Polylines", radius=50
+      )
+    }
+    
+    #Add info marker         
+    p2=p2 %>% addMarkers(group="Route Polylines", lat=as.numeric(centralPointReac()[1]), 
+                  lng=as.numeric(centralPointReac()[2]),
+                  popup = paste("Central point is HERE", sep=""))
+    
+    
+    p2= p2 %>% addLegend("bottomright", colors=colorFun(c(1:Breaks*2)),
+                         labels=paste0(">", round(BreakLegendReac(), digits=2),"min"),
+                         title="Travel Time Quantile") %>%
+      mapshot(url = file)
+  }
+)}
 
 
