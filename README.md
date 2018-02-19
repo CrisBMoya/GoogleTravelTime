@@ -10,7 +10,7 @@ Currently, this App is hosted at: https://cbmapp.shinyapps.io/ShinyTravelTime/.
 
 A few changes have been made:
 - Now you can choose the start point everywhere on the world by giving the correct pair of Latitude and Longitude values.
-- The matrix size can be plotted as a rectangle into the map and you can change it's size. The specific points inside the matrix.
+- The matrix size can be plotted as a rectangle into the map and you can change it's size.
 - The points are plotted along with the matrix size.
 - Improve the colors of routes.
 - Added a Download button. It works dependent to reactives so pressing it runs the whole code. Beware with your API keys.
