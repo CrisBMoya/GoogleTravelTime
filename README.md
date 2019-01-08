@@ -3,7 +3,7 @@
 ___
 UPDATE:
 
-As of 2019.01.07 Google has changed some of its functioning regarding API Keys. While this App still works you'll need to enter credit card information to get an API Key from Google.
+As of 2019.01.07 Google has changed some of its functioning regarding API Keys. While this App still works you'll need to enter credit card information (on Google Site, of course) to get an API Key from Google.
 ___
 
 Calculates driving travel time and plot polylines using a coordinate matrix of multiple points.
